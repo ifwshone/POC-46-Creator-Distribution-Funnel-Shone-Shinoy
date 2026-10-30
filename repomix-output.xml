@@ -1,0 +1,636 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+backend/
+  main.py
+  requirements.txt
+frontend/
+  app/
+    favicon.ico
+    globals.css
+    layout.tsx
+    page.tsx
+  public/
+    file.svg
+    globe.svg
+    next.svg
+    vercel.svg
+    window.svg
+  .gitignore
+  AGENTS.md
+  eslint.config.mjs
+  next.config.ts
+  package.json
+  README.md
+  tailwind.config.ts
+  tsconfig.json
+README.md
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="backend/main.py">
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+import pandas as pd
+import random
+import json
+
+app = FastAPI(title="Real Rails API: Creator Distribution Funnel")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+def generate_synthetic_funnel():
+    platforms = ["YouTube", "TikTok", "Instagram", "X"]
+    data = []
+    for platform in platforms:
+        impressions = random.randint(100000, 5000000)
+        clicks = int(impressions * random.uniform(0.02, 0.08))
+        watch_time_hours = int(clicks * random.uniform(0.5, 3.0))
+        conversions = int(clicks * random.uniform(0.01, 0.05))
+        
+        data.append({
+            "platform": platform,
+            "impressions": impressions,
+            "clicks": clicks,
+            "ctr": round((clicks / impressions) * 100, 2),
+            "watch_time": watch_time_hours,
+            "conversions": conversions
+        })
+    return pd.DataFrame(data)
+
+@app.get("/api/funnel")
+async def get_funnel_data(platform_filter: str = "All"):
+    df = generate_synthetic_funnel()
+    if platform_filter != "All":
+        df = df[df['platform'] == platform_filter]
+    
+    total_impressions = df['impressions'].sum()
+    total_conversions = df['conversions'].sum()
+    avg_conversion_rate = round((total_conversions / total_impressions) * 100, 4) if total_impressions > 0 else 0
+
+    return {
+        "metrics": df.to_dict(orient="records"),
+        "aggregates": {
+            "total_impressions": int(total_impressions),
+            "total_conversions": int(total_conversions),
+            "avg_conversion_rate": avg_conversion_rate
+        }
+    }
+
+@app.get("/api/sidebar-context")
+async def get_sidebar_context():
+    return {
+        "title": "Creator Distribution Funnel",
+        "rail_category": "Distribution & Demand",
+        "why_this_matters": "Directly helpful for founders and creators thinking about demand rails.",
+        "who_controls": "Content creation to algorithmic reach to monetization."
+    }
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+</file>
+
+<file path="backend/requirements.txt">
+fastapi==0.109.2
+uvicorn==0.27.0
+pandas==2.2.0
+pydantic==2.6.1
+</file>
+
+<file path="frontend/app/globals.css">
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+</file>
+
+<file path="frontend/app/layout.tsx">
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+export const metadata: Metadata = {
+  title: "Create Next App",
+  description: "Generated by create next app",
+};
+
+export default function RootLayout({ children }: LayoutProps<"/">) {
+  return (
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+    >
+      <body className="min-h-full flex flex-col">{children}</body>
+    </html>
+  );
+}
+</file>
+
+<file path="frontend/app/page.tsx">
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { Download, Filter } from "lucide-react";
+
+interface FunnelData {
+  platform: string;
+  impressions: number;
+  clicks: number;
+  ctr: number;
+  watch_time: number;
+  conversions: number;
+}
+
+interface Aggregates {
+  total_impressions: number;
+  total_conversions: number;
+  avg_conversion_rate: number;
+}
+
+export default function CreatorDistributionFunnel() {
+  const [funnelData, setFunnelData] = useState<FunnelData[]>([]);
+  const [aggregates, setAggregates] = useState<Aggregates | null>(null);
+  const [platformFilter, setPlatformFilter] = useState("All");
+  const [sidebarContext, setSidebarContext] = useState({
+    title: "Creator Distribution Funnel",
+    why_this_matters: "Directly helpful for founders and creators thinking about demand rails.",
+    who_controls: "Content creation to algorithmic reach to monetization."
+  });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch(`http://localhost:8000/api/funnel?platform_filter=${platformFilter}`);
+        const data = await res.json();
+        setFunnelData(data.metrics);
+        setAggregates(data.aggregates);
+      } catch (error) {
+        console.warn("API unavailable. Falling back to robust mock data.");
+        setFunnelData([
+          { platform: "Mock Platform", impressions: 1500000, clicks: 75000, ctr: 5.0, watch_time: 200000, conversions: 1200 }
+        ]);
+        setAggregates({ total_impressions: 1500000, total_conversions: 1200, avg_conversion_rate: 0.08 });
+      }
+    };
+    fetchData();
+  }, [platformFilter]);
+
+  const handleDownload = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(funnelData));
+    const downloadAnchorNode = document.createElement("a");
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "creator_funnel_sample.json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  };
+
+  return (
+    <div className="flex h-screen w-full bg-[#030712] text-white font-sans overflow-hidden">
+      <main className="w-[70%] h-full p-6 flex flex-col">
+        <header className="mb-6 flex justify-between items-center">
+          <h1 className="text-2xl font-semibold tracking-tight">Distribution & Demand Visualization</h1>
+          <div className="flex gap-2">
+            <span className="px-3 py-1 text-xs bg-[#0B1117] border border-[#1F2937] rounded-md text-[#818CF8]">
+              GDELT Ingestion: Inactive
+            </span>
+            <span className="px-3 py-1 text-xs bg-[#0B1117] border border-[#1F2937] rounded-md text-[#38BDF8] shadow-[0_0_4px_rgba(56,189,248,0.5)]">
+              Synthetic Mock: Active
+            </span>
+          </div>
+        </header>
+
+        <div className="flex-1 bg-[#0B1117] border border-[#1F2937] rounded-xl p-6 shadow-lg relative overflow-hidden">
+           <div className="absolute inset-0 pointer-events-none rounded-xl border border-[#38BDF8] opacity-10 blur-sm"></div>
+           <h2 className="text-sm text-gray-400 mb-4 uppercase tracking-widest">Cross-Platform Funnel Metrics</h2>
+           <ResponsiveContainer width="100%" height="90%">
+            <BarChart data={funnelData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" vertical={false} />
+              <XAxis dataKey="platform" stroke="#6B7280" tick={{ fill: '#9CA3AF' }} />
+              <YAxis yAxisId="left" stroke="#6B7280" tick={{ fill: '#9CA3AF' }} />
+              <YAxis yAxisId="right" orientation="right" stroke="#38BDF8" tick={{ fill: '#38BDF8' }} />
+              <Tooltip 
+                contentStyle={{ backgroundColor: '#0B1117', borderColor: '#1F2937', color: '#fff' }}
+                itemStyle={{ color: '#38BDF8' }}
+              />
+              <Bar yAxisId="left" dataKey="impressions" fill="#1F2937" name="Impressions" radius={[4, 4, 0, 0]} />
+              <Bar yAxisId="right" dataKey="conversions" fill="#38BDF8" name="Conversions" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </main>
+
+      <aside className="w-[30%] h-full bg-[#0B1117] border-l border-[#1F2937] p-6 flex flex-col gap-6 overflow-y-auto">
+        <section className="pb-4 border-b border-[#1F2937]">
+          <h2 className="text-xl font-bold tracking-tight text-[#38BDF8]">{sidebarContext.title}</h2>
+          <p className="text-xs text-gray-500 uppercase tracking-widest mt-1 mb-4">Rail ID: 46</p>
+          <div className="bg-[#030712] p-4 rounded-lg border border-[#1F2937]">
+            <p className="text-sm text-gray-400">Avg. Conversion Rate</p>
+            <p className="text-3xl font-mono text-white mt-1">
+              {aggregates ? `${aggregates.avg_conversion_rate}%` : "0.00%"}
+            </p>
+          </div>
+        </section>
+
+        <section>
+          <h3 className="text-sm font-semibold text-[#818CF8] uppercase tracking-wider mb-2">Why This Matters</h3>
+          <p className="text-sm text-gray-300 leading-relaxed">
+            {sidebarContext.why_this_matters}
+          </p>
+        </section>
+
+        <section>
+          <h3 className="text-sm font-semibold text-[#818CF8] uppercase tracking-wider mb-2">Who Controls The Rail</h3>
+          <p className="text-sm text-gray-300 leading-relaxed">
+            {sidebarContext.who_controls}
+          </p>
+        </section>
+
+        <section className="flex-1">
+          <h3 className="text-sm font-semibold text-[#818CF8] uppercase tracking-wider mb-3 flex items-center gap-2">
+            <Filter size={16} /> Filters & Parameters
+          </h3>
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs text-gray-400 mb-1 block">Platform Split</label>
+              <select 
+                className="w-full bg-[#030712] border border-[#1F2937] rounded p-2 text-sm text-white focus:outline-none focus:border-[#38BDF8] transition-colors"
+                value={platformFilter}
+                onChange={(e) => setPlatformFilter(e.target.value)}
+              >
+                <option value="All">All Platforms</option>
+                <option value="YouTube">YouTube</option>
+                <option value="TikTok">TikTok</option>
+                <option value="Instagram">Instagram</option>
+                <option value="X">X (Twitter)</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-gray-400 mb-1 block">Content Type (Simulated)</label>
+              <select className="w-full bg-[#030712] border border-[#1F2937] rounded p-2 text-sm text-white focus:outline-none focus:border-[#38BDF8] transition-colors">
+                <option>Short-form Video</option>
+                <option>Long-form Video</option>
+                <option>Text / Thread</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <section className="pt-4 border-t border-[#1F2937]">
+          <button 
+            onClick={handleDownload}
+            className="w-full flex items-center justify-center gap-2 bg-[#1F2937] hover:bg-[#374151] hover:text-[#38BDF8] transition-all text-sm font-medium py-3 rounded-lg border border-transparent hover:border-[#38BDF8]"
+          >
+            <Download size={16} />
+            Download Sample Data
+          </button>
+        </section>
+      </aside>
+    </div>
+  );
+}
+</file>
+
+<file path="frontend/public/file.svg">
+<svg fill="none" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M14.5 13.5V5.41a1 1 0 0 0-.3-.7L9.8.29A1 1 0 0 0 9.08 0H1.5v13.5A2.5 2.5 0 0 0 4 16h8a2.5 2.5 0 0 0 2.5-2.5m-1.5 0v-7H8v-5H3v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1M9.5 5V2.12L12.38 5zM5.13 5h-.62v1.25h2.12V5zm-.62 3h7.12v1.25H4.5zm.62 3h-.62v1.25h7.12V11z" clip-rule="evenodd" fill="#666" fill-rule="evenodd"/></svg>
+</file>
+
+<file path="frontend/public/globe.svg">
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><g clip-path="url(#a)"><path fill-rule="evenodd" clip-rule="evenodd" d="M10.27 14.1a6.5 6.5 0 0 0 3.67-3.45q-1.24.21-2.7.34-.31 1.83-.97 3.1M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.48-1.52a7 7 0 0 1-.96 0H7.5a4 4 0 0 1-.84-1.32q-.38-.89-.63-2.08a40 40 0 0 0 3.92 0q-.25 1.2-.63 2.08a4 4 0 0 1-.84 1.31zm2.94-4.76q1.66-.15 2.95-.43a7 7 0 0 0 0-2.58q-1.3-.27-2.95-.43a18 18 0 0 1 0 3.44m-1.27-3.54a17 17 0 0 1 0 3.64 39 39 0 0 1-4.3 0 17 17 0 0 1 0-3.64 39 39 0 0 1 4.3 0m1.1-1.17q1.45.13 2.69.34a6.5 6.5 0 0 0-3.67-3.44q.65 1.26.98 3.1M8.48 1.5l.01.02q.41.37.84 1.31.38.89.63 2.08a40 40 0 0 0-3.92 0q.25-1.2.63-2.08a4 4 0 0 1 .85-1.32 7 7 0 0 1 .96 0m-2.75.4a6.5 6.5 0 0 0-3.67 3.44 29 29 0 0 1 2.7-.34q.31-1.83.97-3.1M4.58 6.28q-1.66.16-2.95.43a7 7 0 0 0 0 2.58q1.3.27 2.95.43a18 18 0 0 1 0-3.44m.17 4.71q-1.45-.12-2.69-.34a6.5 6.5 0 0 0 3.67 3.44q-.65-1.27-.98-3.1" fill="#666"/></g><defs><clipPath id="a"><path fill="#fff" d="M0 0h16v16H0z"/></clipPath></defs></svg>
+</file>
+
+<file path="frontend/public/next.svg">
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 394 80"><path fill="#000" d="M262 0h68.5v12.7h-27.2v66.6h-13.6V12.7H262V0ZM149 0v12.7H94v20.4h44.3v12.6H94v21h55v12.6H80.5V0h68.7zm34.3 0h-17.8l63.8 79.4h17.9l-32-39.7 32-39.6h-17.9l-23 28.6-23-28.6zm18.3 56.7-9-11-27.1 33.7h17.8l18.3-22.7z"/><path fill="#000" d="M81 79.3 17 0H0v79.3h13.6V17l50.2 62.3H81Zm252.6-.4c-1 0-1.8-.4-2.5-1s-1.1-1.6-1.1-2.6.3-1.8 1-2.5 1.6-1 2.6-1 1.8.3 2.5 1a3.4 3.4 0 0 1 .6 4.3 3.7 3.7 0 0 1-3 1.8zm23.2-33.5h6v23.3c0 2.1-.4 4-1.3 5.5a9.1 9.1 0 0 1-3.8 3.5c-1.6.8-3.5 1.3-5.7 1.3-2 0-3.7-.4-5.3-1s-2.8-1.8-3.7-3.2c-.9-1.3-1.4-3-1.4-5h6c.1.8.3 1.6.7 2.2s1 1.2 1.6 1.5c.7.4 1.5.5 2.4.5 1 0 1.8-.2 2.4-.6a4 4 0 0 0 1.6-1.8c.3-.8.5-1.8.5-3V45.5zm30.9 9.1a4.4 4.4 0 0 0-2-3.3 7.5 7.5 0 0 0-4.3-1.1c-1.3 0-2.4.2-3.3.5-.9.4-1.6 1-2 1.6a3.5 3.5 0 0 0-.3 4c.3.5.7.9 1.3 1.2l1.8 1 2 .5 3.2.8c1.3.3 2.5.7 3.7 1.2a13 13 0 0 1 3.2 1.8 8.1 8.1 0 0 1 3 6.5c0 2-.5 3.7-1.5 5.1a10 10 0 0 1-4.4 3.5c-1.8.8-4.1 1.2-6.8 1.2-2.6 0-4.9-.4-6.8-1.2-2-.8-3.4-2-4.5-3.5a10 10 0 0 1-1.7-5.6h6a5 5 0 0 0 3.5 4.6c1 .4 2.2.6 3.4.6 1.3 0 2.5-.2 3.5-.6 1-.4 1.8-1 2.4-1.7a4 4 0 0 0 .8-2.4c0-.9-.2-1.6-.7-2.2a11 11 0 0 0-2.1-1.4l-3.2-1-3.8-1c-2.8-.7-5-1.7-6.6-3.2a7.2 7.2 0 0 1-2.4-5.7 8 8 0 0 1 1.7-5 10 10 0 0 1 4.3-3.5c2-.8 4-1.2 6.4-1.2 2.3 0 4.4.4 6.2 1.2 1.8.8 3.2 2 4.3 3.4 1 1.4 1.5 3 1.5 5h-5.8z"/></svg>
+</file>
+
+<file path="frontend/public/vercel.svg">
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1155 1000"><path d="m577.3 0 577.4 1000H0z" fill="#fff"/></svg>
+</file>
+
+<file path="frontend/public/window.svg">
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M1.5 2.5h13v10a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1zM0 1h16v11.5a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 0 12.5zm3.75 4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5M7 4.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0m1.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5" fill="#666"/></svg>
+</file>
+
+<file path="frontend/.gitignore">
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+</file>
+
+<file path="frontend/AGENTS.md">
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
+</file>
+
+<file path="frontend/eslint.config.mjs">
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
+
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  // Override default ignores of eslint-config-next.
+  globalIgnores([
+    // Default ignores of eslint-config-next:
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+  ]),
+]);
+
+export default eslintConfig;
+</file>
+
+<file path="frontend/next.config.ts">
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  /* config options here */
+  experimental: {
+    agentFeedback: true,
+  },
+  cacheComponents: true,
+  partialPrefetching: true,
+  turbopack: {
+    rules: {
+      "*.css": {
+        loaders: ["@tailwindcss/turbopack"],
+        as: "*.css",
+      },
+    },
+  },
+};
+
+export default nextConfig;
+</file>
+
+<file path="frontend/package.json">
+{
+  "name": "frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "next": "16.4.3",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/turbopack": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.3",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
+</file>
+
+<file path="frontend/README.md">
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+## Getting Started
+
+First, run the development server:
+
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+
+## Learn More
+
+To learn more about Next.js, take a look at the following resources:
+
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+</file>
+
+<file path="frontend/tailwind.config.ts">
+import type { Config } from 'tailwindcss'
+
+const config: Config = {
+  content: [
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {
+      colors: {
+        'obsidian': '#030712',
+        'navy-grey': '#0B1117',
+        'electric-cyan': '#38BDF8',
+        'indigo-accent': '#818CF8',
+        'slate-border': '#1F2937',
+      },
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+      },
+      letterSpacing: {
+        tight: '-0.015em',
+      }
+    },
+  },
+  plugins: [],
+}
+export default config
+</file>
+
+<file path="frontend/tsconfig.json">
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "**/*.mts"
+  ],
+  "exclude": ["node_modules"]
+}
+</file>
+
+<file path="README.md">
+# POC-46-Creator-Distribution-Funnel-Shone-Shinoy
+</file>
+
+</files>
